@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ميزان الشراء الذكي</title>
+    <style>
+      body {
+        font-family: "Cairo", Arial, sans-serif;
+        background: #f4f4f4;
+        margin: 0;
+        padding: 0;
+        direction: rtl;
+        color: #222;
+      }
+
+      .container {
+        width: 95%;
+        max-width: 500px;
+        margin: 40px auto;
+        background: #fff;
+        border-radius: 10px;
+        box-shadow: 0 2px 16px #0001;
+        padding: 24px 18px 18px 18px;
+      }
+
+      h1 {
+        text-align: center;
+        color: #35424a;
+        margin-bottom: 18px;
+      }
+
+      label {
+        display: block;
+        margin: 12px 0 5px 0;
+        font-weight: bold;
+      }
+
+      input[type="number"] {
+        width: 100%;
+        padding: 10px;
+        margin-bottom: 8px;
+        border: 1px solid #ccc;
+        border-radius: 6px;
+        font-size: 1.1em;
+        box-sizing: border-box;
+      }
+
+      .options,
+      .weight-type-options {
+        margin: 10px 0 15px 0;
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        align-items: center;
+      }
+
+      .options label,
+      .weight-type-options label {
+        font-weight: normal;
+        margin: 0 0 0 5px;
+        font-size: 0.98em;
+      }
+
+      button {
+        background: #35424a;
+        color: #fff;
+        border: none;
+        padding: 10px 18px;
+        border-radius: 6px;
+        font-size: 1.1em;
+        cursor: pointer;
+        margin-top: 8px;
+        transition: background 0.2s;
+      }
+
+      button:hover {
+        background: #45a049;
+      }
+
+      .result {
+        margin: 18px 0 10px 0;
+        font-size: 1.2em;
+        color: #222;
+        background: #f9f9f9;
+        padding: 10px 12px;
+        border-radius: 6px;
+        min-height: 32px;
+      }
+
+      .history {
+        margin-top: 25px;
+        background: #f7f7f7;
+        border-radius: 8px;
+        padding: 10px 12px;
+        max-height: 180px;
+        overflow-y: auto;
+      }
+
+      .history-title {
+        font-size: 1.05em;
+        color: #35424a;
+        margin-bottom: 6px;
+        font-weight: bold;
+      }
+
+      .history-list {
+        list-style: decimal inside;
+        padding: 0;
+        margin: 0;
+      }
+
+      .history-list li {
+        font-size: 0.98em;
+        margin-bottom: 4px;
+        color: #444;
+      }
+
+      .clear-history {
+        background: #e74c3c;
+        color: #fff;
+        border: none;
+        padding: 4px 10px;
+        border-radius: 4px;
+        font-size: 0.9em;
+        cursor: pointer;
+        float: left;
+        margin-top: 4px;
+      }
+
+      .divider {
+        border-top: 1px solid #eee;
+        margin: 30px 0 20px 0;
+      }
+
+      @media (max-width: 600px) {
+        .container {
+          padding: 10px 2vw;
+        }
+        h1 {
+          font-size: 1.2em;
+        }
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="container">
+      <h1>ميزان الشراء الذكي</h1>
+      <form id="scaleForm" onsubmit="return false;">
+        <label for="pricePerKg">سعر الكيلو (جنيه):</label>
+        <input
+          type="number"
+          id="pricePerKg"
+          min="0.01"
+          step="0.01"
+          placeholder="مثال: 25"
+          required
+        />
+
+        <label for="totalPrice">السعر المدفوع (جنيه):</label>
+        <input
+          type="number"
+          id="totalPrice"
+          min="0.01"
+          step="0.01"
+          placeholder="مثال: 37.5"
+        />
+
+        <button id="calcBtn" type="submit">احسب الوزن</button>
+      </form>
+      <div class="result" id="result"></div>
+
+      <div class="divider"></div>
+
+      <form id="priceForm" onsubmit="return false;">
+        <label for="pricePerKg2">سعر الكيلو (جنيه):</label>
+        <input
+          type="number"
+          id="pricePerKg2"
+          min="0.01"
+          step="0.01"
+          placeholder="مثال: 25"
+          required
+        />
+
+        <label for="weight2">الوزن:</label>
+        <input
+          type="number"
+          id="weight2"
+          min="0.001"
+          step="0.001"
+          placeholder="مثال: 1.5 أو 500"
+          required
+        />
+
+        <div class="weight-type-options">
+          <span>نوع الوزن المدخل:</span>
+          <label
+            ><input type="radio" name="weightType2" value="kg" checked />
+            كجم</label
+          >
+          <label
+            ><input type="radio" name="weightType2" value="g" /> جرام</label
+          >
+        </div>
+
+        <button id="calcPriceBtn" type="submit">احسب السعر المدفوع</button>
+      </form>
+      <div class="result" id="result2"></div>
+
+      <div class="history">
+        <div class="history-title">
+          سجل العمليات
+          <button class="clear-history" onclick="clearHistory()">
+            مسح السجل
+          </button>
+        </div>
+        <ul class="history-list" id="historyList"></ul>
+      </div>
+    </div>
+    <script>
+      // تعديل دالة عرض الوزن ليعرض دائماً كجم وجرام معاً بشكل واضح فقط
+      function formatWeight(weight) {
+        if (isNaN(weight) || weight < 0) return "قيمة غير صحيحة";
+        const kg = Math.floor(weight);
+        const g = Math.round((weight - kg) * 1000);
+        let str = "";
+        if (kg > 0) str += kg + " كجم";
+        if (g > 0) str += (kg > 0 ? " و" : "") + g + " جرام";
+        if (str === "") str = "0 جرام";
+        return str;
+      }
+
+      function saveHistory(entry) {
+        let history = JSON.parse(localStorage.getItem("scaleHistory") || "[]");
+        history.unshift(entry);
+        if (history.length > 20) history = history.slice(0, 20);
+        localStorage.setItem("scaleHistory", JSON.stringify(history));
+        renderHistory();
+      }
+
+      function renderHistory() {
+        const history = JSON.parse(
+          localStorage.getItem("scaleHistory") || "[]"
+        );
+        const list = document.getElementById("historyList");
+        list.innerHTML = "";
+        if (history.length === 0) {
+          list.innerHTML = "<li>لا يوجد عمليات محفوظة.</li>";
+          return;
+        }
+        history.forEach((item) => {
+          const li = document.createElement("li");
+          li.textContent = item;
+          list.appendChild(li);
+        });
+      }
+
+      function clearHistory() {
+        localStorage.removeItem("scaleHistory");
+        renderHistory();
+      }
+
+      document.getElementById("scaleForm").onsubmit = function () {
+        const pricePerKg = parseFloat(
+          document.getElementById("pricePerKg").value
+        );
+        const totalPrice = parseFloat(
+          document.getElementById("totalPrice").value
+        );
+        const resultDiv = document.getElementById("result");
+
+        if (
+          isNaN(pricePerKg) ||
+          pricePerKg <= 0 ||
+          isNaN(totalPrice) ||
+          totalPrice <= 0
+        ) {
+          resultDiv.textContent = "يرجى إدخال القيم بشكل صحيح";
+          return false;
+        }
+
+        let weight = totalPrice / pricePerKg;
+
+        const formatted = formatWeight(weight);
+        resultDiv.textContent = "الوزن: " + formatted;
+
+        // حفظ في السجل
+        const entry = `سعر الكيلو: ${pricePerKg} جنيه، السعر المدفوع: ${totalPrice} جنيه ← الوزن: ${formatted}`;
+        saveHistory(entry);
+
+        return false;
+      };
+
+      document.getElementById("priceForm").onsubmit = function () {
+        const pricePerKg = parseFloat(
+          document.getElementById("pricePerKg2").value
+        );
+        let weight = parseFloat(document.getElementById("weight2").value);
+        const weightType2 = document.querySelector(
+          'input[name="weightType2"]:checked'
+        ).value;
+        const resultDiv = document.getElementById("result2");
+
+        if (
+          isNaN(pricePerKg) ||
+          pricePerKg <= 0 ||
+          isNaN(weight) ||
+          weight <= 0
+        ) {
+          resultDiv.textContent = "يرجى إدخال القيم بشكل صحيح";
+          return false;
+        }
+
+        // تحويل الوزن إلى كجم إذا كان بالجرام
+        if (weightType2 === "g") weight = weight / 1000;
+
+        const totalPrice = pricePerKg * weight;
+        resultDiv.textContent =
+          "السعر المدفوع: " + totalPrice.toFixed(2) + " جنيه";
+
+        // حفظ في السجل
+        const entry = `سعر الكيلو: ${pricePerKg} جنيه، الوزن: ${
+          weightType2 === "g" ? weight * 1000 + " جرام" : weight + " كجم"
+        } ← السعر المدفوع: ${totalPrice.toFixed(2)} جنيه`;
+        saveHistory(entry);
+
+        return false;
+      };
+
+      // عرض السجل عند التحميل
+      renderHistory();
+    </script>
+  </body>
+</html>
